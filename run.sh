@@ -8,7 +8,7 @@ IMAGE_IDX=0
 
 # compile
 gcc glcmSeq.c -o glcmSeq -lm
-gcc glcmVec.c -march=rv64gcv -lp64d -mcmodel=medany -o glcmVec -lm
+gcc glcmVec.c -march=rv64gcv -mabi=lp64d -mcmodel=medany -o glcmVec -lm
 # COMPLE: ./glcmSeq --distance 1 --angles 0 45 90 --normed 1 --image 0 > test.out
 # COMPLE: ./glcmVec --distance 1 --angles 0 45 90 --normed 1 --optimized 1 --image 0 > test.out
 
