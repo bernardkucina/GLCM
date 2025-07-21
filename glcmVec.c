@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     unsigned char *h_imageIn = stbi_load(image_name[image], &width, &height, &cpp, STBI_rgb);
     if (h_imageIn == NULL)
     {
-        printf("Error reading loading image %s!\n", image_name);
+        printf("Error reading loading image!\n");
         exit(EXIT_FAILURE);
     }
     
