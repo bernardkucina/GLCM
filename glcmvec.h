@@ -78,7 +78,7 @@ static inline uint16_t** index_calloc(int* angles, int x, int y, int distance, i
     return indexes;
 }
 
-static inline uint16_t** glcm_index(unsigned char *image_1d, int* angles, int* offSize, int* maxOff, double* sum, uint16_t** indexes ,int x, int y, int distance, int Nangle, int maxValue)
+static inline uint16_t** glcm_index(uint16_t *image_1d, int* angles, int* offSize, int* maxOff, double* sum, uint16_t** indexes ,int x, int y, int distance, int Nangle, int maxValue)
 {
     int MaxSize = MIN_SIZE;
     for(int k = 0; k < Nangle; k++)
@@ -104,8 +104,8 @@ static inline uint16_t** glcm_index(unsigned char *image_1d, int* angles, int* o
         for(int i = b_i; i < e_i; i++)
         {
             int n_i = i + dy;
-            unsigned char *org_pix = &image_1d[i * x + b_j];
-            unsigned char *next_pix = &image_1d[n_i * x + n_j];
+            uint16_t *org_pix = &image_1d[i * x + b_j];
+            uint16_t *next_pix = &image_1d[n_i * x + n_j];
 
             size_t remain = e_j - b_j;
             sum[k] += (double) remain;
@@ -114,23 +114,19 @@ static inline uint16_t** glcm_index(unsigned char *image_1d, int* angles, int* o
                 size_t vl = get_size_e16_m8(remain);
                 asm volatile (     
                     "mv t0, %[cols]\n\t"                 
-                    "vsetvli t1, t0, e8,  m8\n\t"             
-                    "vle8.v v0, (%[src1])\n\t"               
-                    "vle8.v v8, (%[src2])\n\t"
-
-                    "vsetvli x0, x0, e16, m8\n\t"
-                    "vzext.vf2 v16, v0\n\t"
-                    "vzext.vf2 v24, v8\n\t"
+                    "vsetvli t1, t0, e16,  m8\n\t"             
+                    "vle16.v v0, (%[src1])\n\t"               
+                    "vle16.v v8, (%[src2])\n\t"
                     "mv    t2, %[sh]\n\t"
-                    "vmadd.vx  v16, t2, v24\n\t"
-                    "vse16.v v16, (%[dst])\n\t"
+                    "vmadd.vx  v0, t2, v8\n\t"
+                    "vse16.v v0, (%[dst])\n\t"
                     :
                     : [src1] "r" (org_pix),
                       [src2] "r" (next_pix),
                       [dst]  "r" (ponter),
                       [cols] "r" (vl),
                       [sh]   "r"(maxValue)
-                    : "t0", "t1", "t2","v0", "v8", "v16", "v24","memory"
+                    : "t0", "t1", "t2","v0", "v8", "memory"
                 );
                 remain -= vl;
                 ponter += vl;

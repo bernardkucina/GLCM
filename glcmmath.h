@@ -88,6 +88,27 @@ static inline unsigned char* rgb_2_gray(unsigned char *h_imageIn, int width, int
     return gray_image;
 }
 
+static inline uint16_t* rgb_2_gray_16(unsigned char *h_imageIn, int width, int height, int cpp, int* maximum)
+{
+    uint16_t *gray_image = (uint16_t*) malloc(sizeof(uint16_t) * width * height);
+    int max = 0;
+    for (int i = 0; i < width * height; i++)
+    {
+        int idx = i * cpp;
+        unsigned char r = h_imageIn[idx];     // Red
+        unsigned char g = h_imageIn[idx + 1]; // Green
+        unsigned char b = h_imageIn[idx + 2]; // Blue
+        double gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        gray_image[i] = (uint16_t)(round(gray));
+        if(gray_image[i] > max)
+        {
+            max = gray_image[i];
+        }
+    }
+    *maximum = (max + 1);
+    return gray_image;
+}
+
 static inline clock_t read_cycles(void)
 {
     return clock();

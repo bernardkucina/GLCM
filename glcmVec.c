@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     unsigned char *h_imageIn = stbi_load(image_name[image], &width, &height, &cpp, STBI_rgb);
     if (h_imageIn == NULL)
     {
-        printf("Error reading loading image!\n");
+        printf("Error reading loading image %s!\n", image_name);
         exit(EXIT_FAILURE);
     }
     
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     int maxOff = 0;
     int maximum = 0;
 
-    unsigned char* gray_image = rgb_2_gray(h_imageIn, width, height, cpp, &maximum);
+    uint16_t* gray_image = rgb_2_gray_16(h_imageIn, width, height, cpp, &maximum);
     double* histogram = (double*) calloc(nAngles * maximum * maximum, sizeof(double));
     double** addr = (double**) calloc(nAngles, sizeof(double*));
     uint16_t** offets = index_calloc(angles, width, height, distance, nAngles);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
     clock_t t1G = read_cycles();
     offets = glcm_index(gray_image, angles, offSize, &maxOff, sum, offets, width, height, distance, nAngles, maximum);
-    //glcm_vec(histogram, sum, offets, offSize, addr,  maxOff, nAngles, normed, maximum);
+    glcm_vec(histogram, sum, offets, offSize, addr,  maxOff, nAngles, normed, maximum);
     clock_t t2G = read_cycles();
     
     if(normed)
@@ -99,12 +99,12 @@ int main(int argc, char *argv[]) {
 
         for(int i = 0; i < nAngles; i++)
         {
-            // printf("Contrast: %.5f\n", glcm_feat[i * FEAUTERS + CONTRAST]);
-            // printf("Dissimilarity: %.5f\n", glcm_feat[i * FEAUTERS + DISSIMILARITY]);
-            // printf("Homogeneity: %.5f\n", glcm_feat[i * FEAUTERS + HOMOGENITY]);
-            // printf("ASM: %.5f\n", glcm_feat[i * FEAUTERS + ASM]);
-            // printf("Energy: %.5f\n", glcm_feat[i * FEAUTERS + ENERGY]);
-            // printf("\n");
+            printf("Contrast: %.5f\n", glcm_feat[i * FEAUTERS + CONTRAST]);
+            printf("Dissimilarity: %.5f\n", glcm_feat[i * FEAUTERS + DISSIMILARITY]);
+            printf("Homogeneity: %.5f\n", glcm_feat[i * FEAUTERS + HOMOGENITY]);
+            printf("ASM: %.5f\n", glcm_feat[i * FEAUTERS + ASM]);
+            printf("Energy: %.5f\n", glcm_feat[i * FEAUTERS + ENERGY]);
+            printf("\n");
         }
         printf("TimeFeauters: %ld µs\n", get_time(t1F, t2F));
     }
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
         free(offets[i]);
     }
     free(offets);
-    free(histogram);
+    //free(histogram);
     free(gray_image);
     free(offSize);
     free(sum);

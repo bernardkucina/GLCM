@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
             // printf("Homogeneity: %.5f\n", glcm_feat[i * FEAUTERS + HOMOGENITY]);
             // printf("ASM: %.5f\n", glcm_feat[i * FEAUTERS + ASM]);
             // printf("Energy: %.5f\n", glcm_feat[i * FEAUTERS + ENERGY]);
-            //printf("\n");
+            // printf("\n");
         }
         printf("TimeFeauters: %ld µs\n", get_time(t1F, t2F));
     }
