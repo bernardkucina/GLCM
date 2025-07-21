@@ -1,15 +1,51 @@
 ---------------------------------------------------
 Sequential: 0 45 90 
-TimeFeauters: 12388 µs
-TimeGLCM: 395605 µs
+TimeFeauters: 12371 µs
+TimeGLCM: 397001 µs
 ---------------------------------------------------
 ---------------------------------------------------
 VectorizedNormal: 0 45 90 
-TimeFeauters: 2906 µs
-TimeGLCM: 533280 µs
+Contrast: 326.51920
+Dissimilarity: 12.19616
+Homogeneity: 0.10863
+ASM: 0.00052
+Energy: 0.02272
+
+Contrast: 252.01134
+Dissimilarity: 10.51404
+Homogeneity: 0.12574
+ASM: 0.00059
+Energy: 0.02436
+
+Contrast: 204.04973
+Dissimilarity: 9.47202
+Homogeneity: 0.14009
+ASM: 0.00064
+Energy: 0.02535
+
+TimeFeauters: 2898 µs
+TimeGLCM: 533406 µs
 ---------------------------------------------------
 ---------------------------------------------------
 VectorizedOpt: 0 45 90 
-TimeFeauters: 2268 µs
-TimeGLCM: 532282 µs
+Contrast: 326.51920
+Dissimilarity: 12.19616
+Homogeneity: 0.10863
+ASM: 0.00052
+Energy: 0.02272
+
+Contrast: 252.01134
+Dissimilarity: 10.51404
+Homogeneity: 0.12574
+ASM: 0.00059
+Energy: 0.02436
+
+Contrast: 204.04973
+Dissimilarity: 9.47202
+Homogeneity: 0.14009
+ASM: 0.00064
+Energy: 0.02535
+
+TimeFeauters: 2261 µs
+TimeGLCM: 267810 µs
 ---------------------------------------------------
