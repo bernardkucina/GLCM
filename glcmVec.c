@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
     clock_t t1G = read_cycles();
     offets = glcm_index(gray_image, angles, offSize, &maxOff, sum, offets, width, height, distance, nAngles, maximum);
-    glcm_vec(histogram, sum, offets, offSize, addr,  maxOff, nAngles, normed, maximum);
+    //glcm_vec(histogram, sum, offets, offSize, addr,  maxOff, nAngles, normed, maximum);
     clock_t t2G = read_cycles();
     
     if(normed)
