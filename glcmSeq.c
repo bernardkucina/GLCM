@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <stdint.h>
 #include "glcmseq.h"
 
 #define STB_IMAGE_IMPLEMENTATION
