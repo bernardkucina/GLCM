@@ -78,6 +78,31 @@ static inline uint16_t** index_calloc(int* angles, int x, int y, int distance, i
     return indexes;
 }
 
+static inline uint16_t* index_calloc_opt(int* angles, int x, int y, int distance, int Nangle)
+{
+    int maximum = 0;
+    for(int k = 0; k < Nangle; k++)
+    {
+        int dy = 0;
+        int dx = 0;
+        
+        offset(angles[k], distance, &dx, &dy);
+        
+        int b_i = max(0, -dy);
+        int e_i = min(y, y - dy);
+        int b_j = max(0, -dx);
+        int e_j = min(x, x - dx);
+
+        int curr = (e_i - b_i) * (e_j - b_j);
+        if(maximum < curr) {
+            maximum = curr;
+        }
+
+    }
+    uint16_t* indexes = (uint16_t*) calloc(maximum, sizeof(uint16_t));
+    return indexes;
+}
+
 static inline uint16_t** glcm_index(uint16_t *image_1d, int* angles, int* offSize, int* maxOff, double* sum, uint16_t** indexes ,int x, int y, int distance, int Nangle, int maxValue)
 {
     int MaxSize = MIN_SIZE;
@@ -139,35 +164,32 @@ static inline uint16_t** glcm_index(uint16_t *image_1d, int* angles, int* offSiz
     return indexes;
 }
 
-static inline void normed_vec(double* histogram, double* sum, int Nangles, int maxValue)
+static inline void normed_vec(double* histogram, double sum, int maxValue, int i)
 {
-    for(int i = 0; i < Nangles; i++)
+    if(sum > 0)
     {
-        if(sum[i] > 0)
+        size_t remain = maxValue * maxValue;
+        double* ponter = &histogram[i * maxValue * maxValue];
+        while(remain > 0)
         {
-            size_t remain = maxValue * maxValue;
-            double* ponter = &histogram[i * maxValue * maxValue];
-            while(remain > 0)
-            {
-                size_t vl = get_size_e64_m8(remain);
-                asm volatile (
-                    "mv    t0, %[n]\n\t"
-                    "vsetvli t1, t0, e64, m8\n\t"
-                    "vle64.v v0, (%[src])\n\t"
-                    "fmv.d.x   ft0, %[one]\n\t"
-                    
-                    "vfdiv.vf v0, v0, ft0\n\t"
-                    "vse64.v v0, (%[src])\n\t"
-                    :
-                    : [n]"r"(vl),
-                    [src] "r" (ponter),
-                    [one] "r" (sum[i])
-                    : "t0","t1","ft0","v0", "v1","memory"
-                );
-                remain -= vl;
-                ponter += vl;
-            }
-        }
+            size_t vl = get_size_e64_m8(remain);
+            asm volatile (
+                "mv    t0, %[n]\n\t"
+                "vsetvli t1, t0, e64, m8\n\t"
+                "vle64.v v0, (%[src])\n\t"
+                "fmv.d.x   ft0, %[one]\n\t"
+                
+                "vfdiv.vf v0, v0, ft0\n\t"
+                "vse64.v v0, (%[src])\n\t"
+                :
+                : [n]"r"(vl),
+                [src] "r" (ponter),
+                [one] "r" (sum)
+                : "t0","t1","ft0","v0", "v1","memory"
+            );
+            remain -= vl;
+            ponter += vl;
+         }
     }
     return;
 }
@@ -216,10 +238,85 @@ static inline void glcm_vec(double* histogram, double* sum, uint16_t** offsets, 
     }
 
     if(normed) {
-        normed_vec(histogram, sum, Nangles, maxValue);
+        for(int i = 0; i < Nangles; i++)
+        {
+            normed_vec(histogram, sum[i], maxValue, i);
+        }
     }
     return;
     
+}
+
+void glcm_norm_add(double* histogram, uint16_t* offsets, int size, double sum, int maxOff, int normed, int maxValue, int angle)
+{
+    for(int i = 0; i < maxOff; i++)
+    {
+        int J = angle * maxValue * maxValue;
+        histogram[J + offsets[i]] += 1;
+        offsets[i] = 0;
+    }
+    if(normed) {
+        normed_vec(histogram, sum, maxValue, angle);
+    }
+}
+
+static inline void glcm_vec_opt(double* histogram, uint16_t *image_1d, int* angles, double* sum, uint16_t* indexes ,int x, int y, int distance, int Nangle, int maxValue, int normed)
+{
+    for(int k = 0; k < Nangle; k++)
+    {
+
+        size_t vl;
+        int dy = 0;
+        int dx = 0;
+        
+        offset(angles[k], distance, &dx, &dy);
+        
+        int b_i = max(0, -dy);
+        int e_i = min(y, y - dy);
+        int b_j = max(0, -dx);
+        int e_j = min(x, x - dx);
+        
+        int size = (e_i - b_i) * (e_j - b_j);
+
+        uint16_t* ponter = indexes;
+        int n_j = b_j + dx;
+        for(int i = b_i; i < e_i; i++)
+        {
+            int n_i = i + dy;
+            uint16_t *org_pix = &image_1d[i * x + b_j];
+            uint16_t *next_pix = &image_1d[n_i * x + n_j];
+
+            size_t remain = e_j - b_j;
+            sum[k] += (double) remain;
+            while(remain > 0)
+            {
+                size_t vl = get_size_e16_m8(remain);
+                asm volatile (     
+                    "mv t0, %[cols]\n\t"                 
+                    "vsetvli t1, t0, e16,  m8\n\t"             
+                    "vle16.v v0, (%[src1])\n\t"               
+                    "vle16.v v8, (%[src2])\n\t"
+                    "mv    t2, %[sh]\n\t"
+                    "vmadd.vx  v0, t2, v8\n\t"
+                    "vse16.v v0, (%[dst])\n\t"
+                    :
+                    : [src1] "r" (org_pix),
+                      [src2] "r" (next_pix),
+                      [dst]  "r" (ponter),
+                      [cols] "r" (vl),
+                      [sh]   "r"(maxValue)
+                    : "t0", "t1", "t2","v0", "v8", "memory"
+                );
+                remain -= vl;
+                ponter += vl;
+                org_pix += vl;
+                next_pix += vl;
+            }    
+        }
+
+        glcm_norm_add(histogram, indexes, size, sum[k], size, normed, maxValue, k);
+    }
+    return;
 }
 
 static inline void rvv_reset()

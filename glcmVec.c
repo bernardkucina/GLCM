@@ -78,16 +78,38 @@ int main(int argc, char *argv[]) {
     int maximum = 0;
 
     uint16_t* gray_image = rgb_2_gray_16(h_imageIn, width, height, cpp, &maximum);
-    double* histogram = (double*) calloc(nAngles * maximum * maximum, sizeof(double));
     double** addr = (double**) calloc(nAngles, sizeof(double*));
-    uint16_t** offets = index_calloc(angles, width, height, distance, nAngles);
-    double* glcm_feat = (double*) calloc(nAngles * FEAUTERS, sizeof(double));
+    double* histogram = (double*) calloc(nAngles * maximum * maximum, sizeof(double));
+    clock_t t1G;
+    clock_t t2G;
+    if(optimized)
+    {
+        uint16_t* offets = index_calloc_opt(angles, width, height, distance, nAngles);
+        t1G = read_cycles();
+        glcm_vec_opt(histogram, gray_image, angles, sum, offets ,width, height, distance, nAngles, maximum, normed);
+        t2G = read_cycles();
+        free(offets);
+    }
+    else
+    {
+        uint16_t** offets = index_calloc(angles, width, height, distance, nAngles);
+        t1G = read_cycles();
+        offets = glcm_index(gray_image, angles, offSize, &maxOff, sum, offets, width, height, distance, nAngles, maximum);
+        glcm_vec(histogram, sum, offets, offSize, addr,  maxOff, nAngles, normed, maximum);
+        t2G = read_cycles();
 
-    clock_t t1G = read_cycles();
-    offets = glcm_index(gray_image, angles, offSize, &maxOff, sum, offets, width, height, distance, nAngles, maximum);
-    glcm_vec(histogram, sum, offets, offSize, addr,  maxOff, nAngles, normed, maximum);
-    clock_t t2G = read_cycles();
+        for(int i = 0; i < nAngles; i++)
+        {
+            free(offets[i]);
+        }
+        free(offets);
+    }
+    free(gray_image);
+    free(offSize);
+    free(sum);
+    free(addr);
     
+    double* glcm_feat = (double*) calloc(nAngles * FEAUTERS, sizeof(double));
     if(normed)
     {
         clock_t t1F = read_cycles();
@@ -96,7 +118,6 @@ int main(int argc, char *argv[]) {
             glcm_feauters(&histogram[i * maximum * maximum], &glcm_feat[i * FEAUTERS], maximum, optimized);
         }
         clock_t t2F = read_cycles();
-	/*
         for(int i = 0; i < nAngles; i++)
         {
            printf("Contrast: %.5f\n", glcm_feat[i * FEAUTERS + CONTRAST]);
@@ -106,7 +127,6 @@ int main(int argc, char *argv[]) {
            printf("Energy: %.5f\n", glcm_feat[i * FEAUTERS + ENERGY]);
            printf("\n");
         }
-	*/
         printf("TimeFeauters: %ld µs\n", get_time(t1F, t2F));
     }
     printf("TimeGLCM: %ld µs\n", get_time(t1G, t2G));
@@ -138,17 +158,7 @@ int main(int argc, char *argv[]) {
                     printf("\n");
                     }
                     */
-
-    for(int i = 0; i < nAngles; i++)
-    {
-        free(offets[i]);
-    }
-    free(offets);
     free(histogram);
-    free(gray_image);
-    free(offSize);
-    free(sum);
-    free(addr);
     free(glcm_feat);
     return 0;
 }
