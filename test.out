@@ -1,4 +1,4 @@
-Sequential: 0 45 90 
+VectorizedOpt: 0 45 90 
 Contrast: 10.29665
 Dissimilarity: 2.01707
 Homogeneity: 0.46200
@@ -17,5 +17,5 @@ Homogeneity: 0.56612
 ASM: 0.00424
 Energy: 0.06514
 
-TimeFeauters: 12334 µs
-TimeGLCM: 380018 µs
+TimeFeauters: 2216 µs
+TimeGLCM: 474201 µs
