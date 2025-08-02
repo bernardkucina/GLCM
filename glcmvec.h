@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "glcmmath.h"
+#include "rvvconf.h"
 
 #define FEAUTERS 5
 #define CONTRAST 0
@@ -13,50 +14,6 @@
 #define MIN_SIZE -1
 const double ONE = 1.0;
 const double ZERO = 0.0;
-
-unsigned long get_size_e16_m8(size_t remain)
-{
-    size_t vl;
-    asm volatile(
-      "vsetvli %0, %1, e16, m8\n\t"
-      : "=r"(vl)
-      : "r"(remain)
-    );
-    return vl;
-}
-
-unsigned long get_size_e16_m1(size_t remain)
-{
-    size_t vl;
-    asm volatile(
-      "vsetvli %0, %1, e16, m1\n\t"
-      : "=r"(vl)
-      : "r"(remain)
-    );
-    return vl;
-}
-
-unsigned long get_size_e64_m8(size_t remain)
-{
-    size_t vl;
-    asm volatile(
-      "vsetvli %0, %1, e64, m8\n\t"
-      : "=r"(vl)
-      : "r"(remain)
-    );
-    return vl;
-}
-
-unsigned long get_size_e64_m1(size_t remain)
-{
-    size_t vl;
-    asm volatile(
-      "vsetvli %0, %1, e64, m1\n\t"
-      : "=r"(vl)
-      : "r"(remain)
-    );
-    return vl;
-}
 
 static inline uint16_t** index_calloc(int* angles, int x, int y, int distance, int Nangle)
 {
@@ -103,7 +60,7 @@ static inline uint16_t* index_calloc_opt(int* angles, int x, int y, int distance
     return indexes;
 }
 
-static inline uint16_t** glcm_index(uint16_t *image_1d, int* angles, int* offSize, int* maxOff, double* sum, uint16_t** indexes ,int x, int y, int distance, int Nangle, int maxValue)
+static inline uint16_t** glcm_index(uint16_t *image_1d, int* angles, int* offSize, int* maxOff, double* sum, uint16_t** indexes ,int x, int y, int distance, int Nangle, int maxValue, int lmul)
 {
     int MaxSize = MIN_SIZE;
     for(int k = 0; k < Nangle; k++)
@@ -136,10 +93,8 @@ static inline uint16_t** glcm_index(uint16_t *image_1d, int* angles, int* offSiz
             sum[k] += (double) remain;
             while(remain > 0)
             {
-                size_t vl = get_size_e16_m8(remain);
-                asm volatile (     
-                    "mv t0, %[cols]\n\t"                 
-                    "vsetvli t1, t0, e16,  m8\n\t"             
+                size_t vl = rvv_config_e16(remain, lmul);
+                asm volatile (           
                     "vle16.v v0, (%[src1])\n\t"               
                     "vle16.v v8, (%[src2])\n\t"
                     "mv    t2, %[sh]\n\t"
@@ -149,7 +104,6 @@ static inline uint16_t** glcm_index(uint16_t *image_1d, int* angles, int* offSiz
                     : [src1] "r" (org_pix),
                       [src2] "r" (next_pix),
                       [dst]  "r" (ponter),
-                      [cols] "r" (vl),
                       [sh]   "r"(maxValue)
                     : "t0", "t1", "t2","v0", "v8", "memory"
                 );
@@ -164,7 +118,7 @@ static inline uint16_t** glcm_index(uint16_t *image_1d, int* angles, int* offSiz
     return indexes;
 }
 
-static inline void normed_vec(double* histogram, double sum, int maxValue, int i)
+static inline void normed_vec(double* histogram, double sum, int maxValue, int i, int lmul)
 {
     if(sum > 0)
     {
@@ -172,20 +126,17 @@ static inline void normed_vec(double* histogram, double sum, int maxValue, int i
         double* ponter = &histogram[i * maxValue * maxValue];
         while(remain > 0)
         {
-            size_t vl = get_size_e64_m8(remain);
+            size_t vl = rvv_config_e64(remain, lmul);
             asm volatile (
-                "mv    t0, %[n]\n\t"
-                "vsetvli t1, t0, e64, m8\n\t"
                 "vle64.v v0, (%[src])\n\t"
                 "fmv.d.x   ft0, %[one]\n\t"
                 
                 "vfdiv.vf v0, v0, ft0\n\t"
                 "vse64.v v0, (%[src])\n\t"
                 :
-                : [n]"r"(vl),
-                [src] "r" (ponter),
+                : [src] "r" (ponter),
                 [one] "r" (sum)
-                : "t0","t1","ft0","v0", "v1","memory"
+                : "t1","ft0","v0", "v1","memory"
             );
             remain -= vl;
             ponter += vl;
@@ -194,7 +145,7 @@ static inline void normed_vec(double* histogram, double sum, int maxValue, int i
     return;
 }
 
-static inline void glcm_vec(double* histogram, double* sum, uint16_t** offsets, int* offSize, double** addr, int maxOff, int Nangles, int normed, int maxValue)
+static inline void glcm_vec(double* histogram, double* sum, uint16_t** offsets, int* offSize, double** addr, int maxOff, int Nangles, int normed, int maxValue, int lmul)
 {
     int ix = 0;
     double** pointer = addr;
@@ -215,10 +166,8 @@ static inline void glcm_vec(double* histogram, double* sum, uint16_t** offsets, 
         size_t remain = ix;
         while(remain > 0)
         {
-            size_t vl = get_size_e64_m8(remain);
+            size_t vl = rvv_config_e64(remain, lmul);
             asm volatile (
-                "mv    t0, %[n]\n\t"
-                "vsetvli t1, t0, e64, m8\n\t"
                 "vle64.v v0, (%[src])\n\t"
                 "fmv.d.x   ft0, %[one]\n\t"
                 
@@ -226,10 +175,9 @@ static inline void glcm_vec(double* histogram, double* sum, uint16_t** offsets, 
                 "vfadd.vf v8, v8, ft0\n\t"
                 "vsuxei64.v v8, (x0), v0\n\t"
                 :
-                : [n]"r"(vl),
-                  [src] "r" (pointer),
+                : [src] "r" (pointer),
                   [one] "r" (ONE)
-                : "t0","t1","ft0","v0","v8","memory"
+                : "t1","ft0","v0","v8","memory"
             );
             
             remain -= vl;
@@ -240,14 +188,14 @@ static inline void glcm_vec(double* histogram, double* sum, uint16_t** offsets, 
     if(normed) {
         for(int i = 0; i < Nangles; i++)
         {
-            normed_vec(histogram, sum[i], maxValue, i);
+            normed_vec(histogram, sum[i], maxValue, i, lmul);
         }
     }
     return;
     
 }
 
-void glcm_norm_add(double* histogram, uint16_t* offsets, int size, double sum, int maxOff, int normed, int maxValue, int angle)
+void glcm_norm_add(double* histogram, uint16_t* offsets, int size, double sum, int maxOff, int normed, int maxValue, int angle, int lmul)
 {
     for(int i = 0; i < maxOff; i++)
     {
@@ -256,11 +204,11 @@ void glcm_norm_add(double* histogram, uint16_t* offsets, int size, double sum, i
         offsets[i] = 0;
     }
     if(normed) {
-        normed_vec(histogram, sum, maxValue, angle);
+        normed_vec(histogram, sum, maxValue, angle, lmul);
     }
 }
 
-static inline void glcm_vec_opt(double* histogram, uint16_t *image_1d, int* angles, double* sum, uint16_t* indexes ,int x, int y, int distance, int Nangle, int maxValue, int normed)
+static inline void glcm_vec_opt(double* histogram, uint16_t *image_1d, int* angles, double* sum, uint16_t* indexes ,int x, int y, int distance, int Nangle, int maxValue, int normed, int lmul)
 {
     for(int k = 0; k < Nangle; k++)
     {
@@ -290,10 +238,8 @@ static inline void glcm_vec_opt(double* histogram, uint16_t *image_1d, int* angl
             sum[k] += (double) remain;
             while(remain > 0)
             {
-                size_t vl = get_size_e16_m8(remain);
-                asm volatile (     
-                    "mv t0, %[cols]\n\t"                 
-                    "vsetvli t1, t0, e16,  m8\n\t"             
+                size_t vl = rvv_config_e16(remain, lmul);
+                asm volatile (           
                     "vle16.v v0, (%[src1])\n\t"               
                     "vle16.v v8, (%[src2])\n\t"
                     "mv    t2, %[sh]\n\t"
@@ -303,9 +249,8 @@ static inline void glcm_vec_opt(double* histogram, uint16_t *image_1d, int* angl
                     : [src1] "r" (org_pix),
                       [src2] "r" (next_pix),
                       [dst]  "r" (ponter),
-                      [cols] "r" (vl),
                       [sh]   "r"(maxValue)
-                    : "t0", "t1", "t2","v0", "v8", "memory"
+                    : "t1", "t2","v0", "v8", "memory"
                 );
                 remain -= vl;
                 ponter += vl;
@@ -314,64 +259,9 @@ static inline void glcm_vec_opt(double* histogram, uint16_t *image_1d, int* angl
             }    
         }
 
-        glcm_norm_add(histogram, indexes, size, sum[k], size, normed, maxValue, k);
+        glcm_norm_add(histogram, indexes, size, sum[k], size, normed, maxValue, k, lmul);
     }
     return;
-}
-
-static inline void rvv_reset()
-{
-    asm volatile (
-        "vsetvli t1, t0, e64, m8\n\t"
-        :
-        :
-        : "t1","t0","memory"
-    );
-}
-
-static inline void rvv_store_sum(double* sum)
-{
-    asm volatile (
-        "fmv.d.x   ft0, %[base]\n\t"
-        "vfmv.v.f  v24, ft0\n\t"           
-        "vfredosum.vs v24, v16, v24\n\t"    
-        "vfmv.f.s  ft1, v24\n\t"             
-        "fsd        ft1, 0(%[dst])\n\t"
-        :
-        : [dst]  "r"(sum),
-          [base] "r"(ZERO)
-        : "ft0","ft1","v16","v24","memory"
-    );
-}
-
-static inline void rvv_opt()
-{
-    asm volatile(
-        "vsetvli t1, x0, e64, m1\n\t"
-        "vfadd.vv  v16, v16, v17\n\t"
-        "vfadd.vv  v18, v18, v19\n\t"
-        "vfadd.vv  v20, v20, v21\n\t"
-        "vfadd.vv  v22, v22, v23\n\t"
-        "vfadd.vv  v16, v16, v18\n\t"
-        "vfadd.vv  v20, v20, v22\n\t"
-        "vfadd.vv  v16, v16, v20\n\t"
-        :
-        :
-        : "t1","v16","v17","v18","v19","v20","v21","v22","v23","memory"
-    );
-}
-
-static inline void rvv_load_and_config(size_t n, double *src1)
-{
-    asm volatile (
-        "mv    t0, %[n]\n\t"
-        "vsetvli t1, t0, e64, m8\n\t"
-        "vle64.v v8, (%[ptr])\n\t"
-        :
-        : [n]   "r"(n),      
-          [ptr] "r"(src1)    
-        : "t1", "t0", "v8", "memory"
-    );
 }
 
 static inline void rvv_index(long off, long i)
@@ -390,7 +280,7 @@ static inline void rvv_index(long off, long i)
     );
 }
 
-static inline double rvv_contrast(int optimized)
+static inline double rvv_contrast(int optimized, int lmul)
 {
     double sum = 0.0;
     asm volatile (
@@ -402,17 +292,17 @@ static inline double rvv_contrast(int optimized)
     );
 
     if(optimized){
-        rvv_opt();
+        rvv_opt(lmul);
     }
     rvv_store_sum(&sum);
     return sum;
 }
 
-static inline double rvv_dissimilarity(int optimized)
+static inline double rvv_dissimilarity(int optimized, int lmul)
 {
     double sum = 0.0;
      if(optimized){
-        rvv_reset();
+        rvv_reset(lmul);
     }
 
     asm volatile (
@@ -424,17 +314,17 @@ static inline double rvv_dissimilarity(int optimized)
     );
 
     if(optimized){
-        rvv_opt();
+        rvv_opt(lmul);
     }
     rvv_store_sum(&sum);
     return sum;
 }
 
-static inline double rvv_homogenity(int optimized)
+static inline double rvv_homogenity(int optimized, int lmul)
 {
     double sum = 0.0;
     if(optimized){
-        rvv_reset();
+        rvv_reset(lmul);
     }
 
     asm volatile (        
@@ -450,17 +340,17 @@ static inline double rvv_homogenity(int optimized)
     );
 
     if(optimized){
-        rvv_opt();
+        rvv_opt(lmul);
     }
     rvv_store_sum(&sum);
     return sum;
 }
 
-static inline double rvv_ASM(int optimized)
+static inline double rvv_ASM(int optimized, int lmul)
 {
     double sum = 0.0;
     if(optimized){
-        rvv_reset();
+        rvv_reset(lmul);
     }
 
     asm volatile (
@@ -471,13 +361,13 @@ static inline double rvv_ASM(int optimized)
     );
 
     if(optimized){
-        rvv_opt();
+        rvv_opt(lmul);
     }
     rvv_store_sum(&sum);
     return sum;
 }
 
-static inline void glcm_feauters(double* histogram, double* feauters, int max_value, int optimized)
+static inline void glcm_feauters(double* histogram, double* feauters, int max_value, int optimized, int lmul)
 {
     for (int i = 0; i < max_value; ++i)
     {
@@ -486,14 +376,13 @@ static inline void glcm_feauters(double* histogram, double* feauters, int max_va
         long off = 0;
         while(remain > 0)
         {
-            size_t vl = get_size_e64_m8(remain);
-            rvv_load_and_config(vl, pointer);
+            size_t vl = rvv_load_and_config(remain, pointer, lmul);
             rvv_index(off, (long) i);
 
-            feauters[CONTRAST] += rvv_contrast(optimized);
-            feauters[DISSIMILARITY] += rvv_dissimilarity(optimized);
-            feauters[HOMOGENITY] += rvv_homogenity(optimized);
-            feauters[ASM] += rvv_ASM(optimized);
+            feauters[CONTRAST] += rvv_contrast(optimized, lmul);
+            feauters[DISSIMILARITY] += rvv_dissimilarity(optimized, lmul);
+            feauters[HOMOGENITY] += rvv_homogenity(optimized, lmul);
+            feauters[ASM] += rvv_ASM(optimized, lmul);
 
             remain -= vl;
             pointer += vl;

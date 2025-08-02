@@ -18,7 +18,7 @@ static const char* image_name[4] = {
 };
 
 // COMPILE FOR C FILES: riscv64-unknown-elf-gcc -o hello glcmVec.c -lm
-// RUN (PROXY KERNEL FOR RISC-V): spike --varch=vlen:256,elen:64 --isa=rv64gcv pk ./hello --distance 1 --angles 0 45 90 --normed 1 --optimized 1 --image 0 > test.out
+// RUN (PROXY KERNEL FOR RISC-V): spike --varch=vlen:256,elen:64 --isa=rv64gcv pk ./hello --distance 1 --angles 0 45 90 --normed 1 --optimized 1 --image 0 --lmul 8 > test.out
 // HELP:  echo | riscv64-unknown-elf-gcc -dM -E -     riscv64-unknown-elf-objdump -d hello > log.out
 int main(int argc, char *argv[]) {
 
@@ -27,9 +27,10 @@ int main(int argc, char *argv[]) {
     int optimized = 0;
     int angles[MAX_ANGLES], nAngles = 0;
     int image = 0;
+    int lmul = 1;
 
-    if (argc < 7) {
-        printf("Usage: %s width height --distance N --angles A1 A2 … --normed B --optimized B --image B\n", argv[0]);
+    if (argc < 9) {
+        printf("Usage: %s width height --distance N --angles A1 A2 … --normed B --optimized B --image B --lmul 8\n", argv[0]);
         return 1;
     }
 
@@ -52,6 +53,9 @@ int main(int argc, char *argv[]) {
         }
         else if (strcmp(argv[i], "--image") == 0 && i+1 < argc) {
             image = atoi(argv[++i]);
+        }
+        else if (strcmp(argv[i], "--lmul") == 0 && i+1 < argc) {
+            lmul = atoi(argv[++i]);
         }
     }
 
@@ -86,7 +90,7 @@ int main(int argc, char *argv[]) {
     {
         uint16_t* offets = index_calloc_opt(angles, width, height, distance, nAngles);
         t1G = read_cycles();
-        glcm_vec_opt(histogram, gray_image, angles, sum, offets ,width, height, distance, nAngles, maximum, normed);
+        glcm_vec_opt(histogram, gray_image, angles, sum, offets ,width, height, distance, nAngles, maximum, normed, lmul);
         t2G = read_cycles();
         free(offets);
     }
@@ -94,8 +98,8 @@ int main(int argc, char *argv[]) {
     {
         uint16_t** offets = index_calloc(angles, width, height, distance, nAngles);
         t1G = read_cycles();
-        offets = glcm_index(gray_image, angles, offSize, &maxOff, sum, offets, width, height, distance, nAngles, maximum);
-        glcm_vec(histogram, sum, offets, offSize, addr,  maxOff, nAngles, normed, maximum);
+        offets = glcm_index(gray_image, angles, offSize, &maxOff, sum, offets, width, height, distance, nAngles, maximum, lmul);
+        glcm_vec(histogram, sum, offets, offSize, addr,  maxOff, nAngles, normed, maximum, lmul);
         t2G = read_cycles();
 
         for(int i = 0; i < nAngles; i++)
@@ -115,10 +119,9 @@ int main(int argc, char *argv[]) {
         clock_t t1F = read_cycles();
         for(int i = 0; i < nAngles; i++)
         {
-            glcm_feauters(&histogram[i * maximum * maximum], &glcm_feat[i * FEAUTERS], maximum, optimized);
+            glcm_feauters(&histogram[i * maximum * maximum], &glcm_feat[i * FEAUTERS], maximum, optimized, lmul);
         }
         clock_t t2F = read_cycles();
-	/*
         for(int i = 0; i < nAngles; i++)
         {
            printf("Contrast: %.5f\n", glcm_feat[i * FEAUTERS + CONTRAST]);
@@ -128,7 +131,6 @@ int main(int argc, char *argv[]) {
            printf("Energy: %.5f\n", glcm_feat[i * FEAUTERS + ENERGY]);
            printf("\n");
         }
-	*/
         printf("TimeFeauters: %ld µs\n", get_time(t1F, t2F));
     }
     printf("TimeGLCM: %ld µs\n", get_time(t1G, t2G));
