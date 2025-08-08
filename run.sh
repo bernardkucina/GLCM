@@ -6,7 +6,7 @@ ANGLES=(0 45 90)
 DISTANCES=(1 5 10)
 IMAGE_IDX=0
 ATTEMPT=2
-LMUL=8
+LMUL=$1
 
 # make sure result directory exists
 mkdir -p "result${LMUL}"
