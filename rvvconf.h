@@ -247,7 +247,7 @@ static inline void rvv_store_sum(double* sum)
     asm volatile (
         "fmv.d.x   ft0, %[base]\n\t"
         "vfmv.v.f  v24, ft0\n\t"           
-        "vfredusum.vs v24, v16, v24\n\t"    
+        "vfredosum.vs v24, v16, v24\n\t"    
         "vfmv.f.s  ft1, v24\n\t"             
         "fsd        ft1, 0(%[dst])\n\t"
         :
