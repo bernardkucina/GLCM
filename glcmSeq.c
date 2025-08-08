@@ -52,12 +52,6 @@ int main(int argc, char *argv[])
     }
 
     // Report
-    printf("Sequential: ");
-    for(int i = 0; i < nAngles; i++){
-        printf("%d ", angles[i]);
-    }
-    printf("\n");
-
    int width, height, cpp;
    unsigned char *h_imageIn = stbi_load(image_name[image], &width, &height, &cpp, STBI_rgb);
    if (h_imageIn == NULL)
@@ -96,9 +90,9 @@ int main(int argc, char *argv[])
             printf("\n");
         }
 	*/
-        printf("TimeFeauters: %ld µs\n", get_time(t1F, t2F));
+        //Time (features, GLCM)
+        printf("(%ld, %ld), ", get_time(t1F, t2F), get_time(t1G, t2G));
     }
-    printf("TimeGLCM: %ld µs\n", get_time(t1G, t2G));
     /*
     printf("Original image:\n");
     for (int i = 0; i < height; i++)
