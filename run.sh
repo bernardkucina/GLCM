@@ -24,7 +24,6 @@ gcc glcmVec.c -march=rv64gcv -mabi=lp64d -mcmodel=medany -o glcmVec -lm
 for d in "${DISTANCES[@]}"; do
   OUTFILE="result${LMUL}/test_distance_${d}.out"
   echo "Running sequential, distance=$d → $OUTFILE"
-  echo "---------------------------------------------------" >> "$OUTFILE"
   echo "Sequential: ${ANGLES[*]}" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmSeq --distance "$d" --angles "${ANGLES[@]}" --normed 1 --image "$IMAGE_IDX" >> "$OUTFILE"
@@ -36,7 +35,6 @@ done
 for d in "${DISTANCES[@]}"; do
   OUTFILE="result${LMUL}/test_distance_${d}.out"
   echo "Running vector (optimized=0), distance=$d → $OUTFILE"
-  echo "---------------------------------------------------" >> "$OUTFILE"
   echo "VectorizedNormal: ${ANGLES[*]}" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 0 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
@@ -48,12 +46,10 @@ done
 for d in "${DISTANCES[@]}"; do
   OUTFILE="result${LMUL}/test_distance_${d}.out"
   echo "Running vector (optimized=1), distance=$d → $OUTFILE"
-  echo "---------------------------------------------------" >> "$OUTFILE"
   echo "VectorizedOpt: ${ANGLES[*]}" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 1 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
   sleep 1
   done
-  echo "\n---------------------------------------------------" >> "$OUTFILE"
 done
 
