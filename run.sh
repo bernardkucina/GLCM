@@ -13,7 +13,7 @@ mkdir -p "result${LMUL}"
 
 # pre-create (and truncate) all output files
 for d in "${DISTANCES[@]}"; do
-  : > "result/test_distance_${d}.out"
+  : > "result${LMUL}/test_distance_${d}.out"
 done
 
 # compile
@@ -22,7 +22,7 @@ gcc glcmVec.c -march=rv64gcv -mabi=lp64d -mcmodel=medany -o glcmVec -lm
 
 # run sequential version
 for d in "${DISTANCES[@]}"; do
-  OUTFILE="result/test_distance_${d}.out"
+  OUTFILE="result${LMUL}/test_distance_${d}.out"
   echo "Running sequential, distance=$d → $OUTFILE"
   echo "Sequential: ${ANGLES[*]}" >> "$OUTFILE"
   echo "---------------------------------------------------" >> "$OUTFILE"
@@ -35,7 +35,7 @@ done
 
 # run vector version, not optimized
 for d in "${DISTANCES[@]}"; do
-  OUTFILE="result/test_distance_${d}.out"
+  OUTFILE="result${LMUL}/test_distance_${d}.out"
   echo "Running vector (optimized=0), distance=$d → $OUTFILE"
   echo "---------------------------------------------------" >> "$OUTFILE"
   echo "VectorizedNormal: ${ANGLES[*]}" >> "$OUTFILE"
@@ -48,7 +48,7 @@ done
 
 # run vector version, optimized
 for d in "${DISTANCES[@]}"; do
-  OUTFILE="result/test_distance_${d}.out"
+  OUTFILE="result${LMUL}/test_distance_${d}.out"
   echo "Running vector (optimized=1), distance=$d → $OUTFILE"
   echo "---------------------------------------------------" >> "$OUTFILE"
   echo "VectorizedOpt: ${ANGLES[*]}" >> "$OUTFILE"
