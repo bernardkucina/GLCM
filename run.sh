@@ -27,7 +27,7 @@ for d in "${DISTANCES[@]}"; do
   echo -e "Sequential: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmSeq --distance "$d" --angles "${ANGLES[@]}" --normed 1 --image "$IMAGE_IDX" >> "$OUTFILE"
-  sleep 5
+  sleep 3
   done
   echo -e "\n" >> "$OUTFILE"
 done
@@ -39,7 +39,7 @@ for d in "${DISTANCES[@]}"; do
   echo -e "VectorizedNormal: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 0 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
-  sleep 5
+  sleep 3
   done
   echo -e "\n" >> "$OUTFILE"
 done
@@ -51,7 +51,7 @@ for d in "${DISTANCES[@]}"; do
   echo -e "VectorizedOpt: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 1 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
-  sleep 5
+  sleep 3
   done
   echo -e "\n" >> "$OUTFILE"
 done
