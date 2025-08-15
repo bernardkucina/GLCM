@@ -2,10 +2,10 @@
 set -e
 
 # fixed parameters
-ANGLES=(0 45 90)
-DISTANCES=(1 5 10)
+ANGLES=(0 45 90 135)
+DISTANCES=(5)
 IMAGE_IDX=0
-ATTEMPT=2
+ATTEMPT=10
 LMUL=$1
 
 # make sure result directory exists
@@ -27,19 +27,7 @@ for d in "${DISTANCES[@]}"; do
   echo -e "Sequential: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmSeq --distance "$d" --angles "${ANGLES[@]}" --normed 1 --image "$IMAGE_IDX" >> "$OUTFILE"
-  sleep 1
-  done
-  echo -e "\n" >> "$OUTFILE"
-done
-
-# run vector version, optimized
-for d in "${DISTANCES[@]}"; do
-  OUTFILE="result${LMUL}/test_distance_${d}.out"
-  echo "Running vector (optimized=1), distance=$d → $OUTFILE"
-  echo -e "VectorizedOpt: ${ANGLES[*]}\n" >> "$OUTFILE"
-  for (( i=0; i<ATTEMPT; i++ )); do
-  ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 1 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
-  sleep 1
+  sleep 5
   done
   echo -e "\n" >> "$OUTFILE"
 done
@@ -51,7 +39,19 @@ for d in "${DISTANCES[@]}"; do
   echo -e "VectorizedNormal: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 0 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
-  sleep 1
+  sleep 5
+  done
+  echo -e "\n" >> "$OUTFILE"
+done
+
+# run vector version, optimized
+for d in "${DISTANCES[@]}"; do
+  OUTFILE="result${LMUL}/test_distance_${d}.out"
+  echo "Running vector (optimized=1), distance=$d → $OUTFILE"
+  echo -e "VectorizedOpt: ${ANGLES[*]}\n" >> "$OUTFILE"
+  for (( i=0; i<ATTEMPT; i++ )); do
+  ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 1 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
+  sleep 5
   done
   echo -e "\n" >> "$OUTFILE"
 done
