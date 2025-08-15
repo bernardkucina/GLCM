@@ -2,7 +2,7 @@
 set -e
 
 # fixed parameters
-ANGLES=(0)
+ANGLES=(0 45)
 DISTANCES=(5)
 IMAGE_IDX=0
 ATTEMPT=10
@@ -32,18 +32,6 @@ for d in "${DISTANCES[@]}"; do
   echo -e "\n" >> "$OUTFILE"
 done
 
-# run vector version, not optimized
-for d in "${DISTANCES[@]}"; do
-  OUTFILE="result${LMUL}/test_distance_${d}.out"
-  echo "Running vector (optimized=0), distance=$d → $OUTFILE"
-  echo -e "VectorizedNormal: ${ANGLES[*]}\n" >> "$OUTFILE"
-  for (( i=0; i<ATTEMPT; i++ )); do
-  ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 0 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
-  sleep 3
-  done
-  echo -e "\n" >> "$OUTFILE"
-done
-
 # run vector version, optimized
 for d in "${DISTANCES[@]}"; do
   OUTFILE="result${LMUL}/test_distance_${d}.out"
@@ -51,6 +39,18 @@ for d in "${DISTANCES[@]}"; do
   echo -e "VectorizedOpt: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
   ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 1 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
+  sleep 3
+  done
+  echo -e "\n" >> "$OUTFILE"
+done
+
+# run vector version, not optimized
+for d in "${DISTANCES[@]}"; do
+  OUTFILE="result${LMUL}/test_distance_${d}.out"
+  echo "Running vector (optimized=0), distance=$d → $OUTFILE"
+  echo -e "VectorizedNormal: ${ANGLES[*]}\n" >> "$OUTFILE"
+  for (( i=0; i<ATTEMPT; i++ )); do
+  ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 0 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
   sleep 3
   done
   echo -e "\n" >> "$OUTFILE"
