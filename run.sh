@@ -2,7 +2,7 @@
 set -e
 
 # fixed parameters
-ANGLES=(0 45)
+ANGLES=(0 45 90)
 DISTANCES=(5)
 IMAGE_IDX=0
 ATTEMPT=10
