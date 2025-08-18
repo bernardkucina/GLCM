@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
         clock_t t1F = read_cycles();
         for(int i = 0; i < nAngles; i++)
         {
-            glcm_feauters(&histogram[i * maximum * maximum], &glcm_feat[i * FEAUTERS], maximum, 0, lmul);
+            glcm_feauters(&histogram[i * maximum * maximum], &glcm_feat[i * FEAUTERS], maximum, optimized, lmul);
         }
         clock_t t2F = read_cycles();
         for(int i = 0; i < nAngles; i++)
