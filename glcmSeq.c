@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
             glcm_feauters(&histogram[i * maximum * maximum], &glcm_feat[i * FEAUTERS], maximum);
         }
         clock_t t2F = read_cycles();
+        /*
         for(int i = 0; i < nAngles; i++)
         {
             printf("Contrast: %.5f\n", glcm_feat[i * FEAUTERS + CONTRAST]);
@@ -88,6 +89,7 @@ int main(int argc, char *argv[])
             printf("Energy: %.5f\n", glcm_feat[i * FEAUTERS + ENERGY]);
             printf("\n");
         }
+        */
         //Time (features, GLCM)
         printf("(%ld, %ld), ", get_time(t1F, t2F), get_time(t1G, t2G));
     }
