@@ -31,40 +31,32 @@ int min(int a, int b)
 
 void offset(int angle, int distance, int* dx, int* dy)
 {
-    if ((angle != 0 || angle != 45 || angle != 90 || angle != 135) && (distance != 1 || distance != 5 || distance != 10))
+    if ((angle==0 || angle==45 || angle==90 || angle==135) && (distance==1 || distance==5 || distance==10))
     {
-        double rad_angle = angle * (PI / 180.0);
-        *dy = round(sin(rad_angle) * distance);
-        *dx = round(cos(rad_angle) * distance);
+        int aidx, didx;
+
+        switch (angle) {
+            case 0:   aidx = 0; break;
+            case 45:  aidx = 1; break;
+            case 90:  aidx = 2; break;
+            case 135: aidx = 3; break;
+            default: aidx = -1;
+        }
+        switch (distance) {
+            case 1:   didx = 0; break;
+            case 5:   didx = 1; break;
+            case 10:  didx = 2; break;
+            default: didx = -1;
+        }
+
+        *dy = SIN[didx][aidx];
+        *dx = COS[didx][aidx];
         return;
     }
-    else
-    {
-        int ix_angle = 0;
-        int ix_distance = 0;
-        switch (ix_angle)
-        {
-            case 0:   ix_angle = 0;   break;
-            case 45:  ix_angle = 1;  break;
-            case 90:  ix_angle = 2; break;
-            case 135: ix_angle = 3; break;
-            default: printf("Invalid angle! Use 0, 45, 90, or 135 degrees.\n");
-            return;
-        }
-    
-        switch (ix_distance)
-        {
-            case 1:   ix_distance = 0;   break;
-            case 3:  ix_distance = 1;  break;
-            case 5:  ix_distance = 2; break;
-            default: printf("Invalid distance! Use 1, 5, 10.\n");
-            return;
-        }
-    
-        *dy = SIN[ix_distance][ix_angle];
-        *dx = COS[ix_distance][ix_angle];
-        return;
-    }
+
+    double rad = angle * (PI / 180.0);
+    *dy = round(sin(rad) * distance); 
+    *dx = round(cos(rad) * distance);
 }
 
 static inline unsigned char* rgb_2_gray(unsigned char *h_imageIn, int width, int height, int cpp, int* maximum)
