@@ -4,7 +4,7 @@ set -e
 # fixed parameters
 ANGLES=(0 45 90 135)
 DISTANCES=(5)
-IMAGE_IDX=3
+IMAGE_IDX=0
 ATTEMPT=10
 LMUL=$1
 
