@@ -21,28 +21,6 @@ We have researched different algorithmic approaches for calculating GLCM and its
 - First vectorized implementation of the GLCM algorithm on RVV 1.0.
 - Achieved an average 1.52 speedup over the sequential implementation (LMUL = 8).
 ---
-
-## Results
-
-Code was tested on the OrangePi RV2 platform, which supports RVV 1.0.  
-The following table presents speedups for running the program on different images.
-
-The figures are from the `images/` folder and are:
-- **Figure 1** = `frame_0249_jpg.rf.d33720f1304d383c749e18cc08dea6db.jpg`
-- **Figure 2** = `frame_0055_jpg.rf.440b9803a9766de971934b5a891db20f.jpg`
-- **Figure 3** = `frame_0057_jpg.rf.88cee5058d48da760320392c6967ddde.jpg`
-- **Figure 4** = `frame_0252_jpg.rf.f685d90adb983dc8dafa4ae700342521.jpg`
-
-|                | Figure 1 | Figure 2 | Figure 3 | Figure 4 |
-|----------------|:--------:|:--------:|:--------:|:--------:|
-| **Speedup**    |   1.54   |   1.52   |   1.55   |   1.46   |
-
-*Table: Speedups of the vectorized implementation of the GLCM algorithm and feature values across different images (see Figure 1–4 above), for the angle set `{0°, 45°, 90°, 135°}`, distance `d = 5`, and `LMUL = 8`.*
-
-
-
----
-
 ## Project stucture
 ```
 .
@@ -116,6 +94,24 @@ make install
 cd ../..
 rm -rf riscv-pk
 ```
+---
+## Results
+
+Code was tested on the OrangePi RV2 platform, which supports RVV 1.0.  
+The following table presents speedups for running the program on different images.
+
+The figures are from the `images/` folder and are:
+- **Figure 1** = `frame_0249_jpg.rf.d33720f1304d383c749e18cc08dea6db.jpg`
+- **Figure 2** = `frame_0055_jpg.rf.440b9803a9766de971934b5a891db20f.jpg`
+- **Figure 3** = `frame_0057_jpg.rf.88cee5058d48da760320392c6967ddde.jpg`
+- **Figure 4** = `frame_0252_jpg.rf.f685d90adb983dc8dafa4ae700342521.jpg`
+
+|                | Figure 1 | Figure 2 | Figure 3 | Figure 4 |
+|----------------|:--------:|:--------:|:--------:|:--------:|
+| **Speedup**    |   1.54   |   1.52   |   1.55   |   1.46   |
+
+*Table: Speedups of the vectorized implementation of the GLCM algorithm and feature values across different images (see Figure 1–4 above), for the angle set `{0°, 45°, 90°, 135°}`, distance `d = 5`, and `LMUL = 8`.*
+
 ---
 ## Future work
 We have found a faster solution, but there is still room for improvement. Currently, we compute the GLCM histogram in double-precision floating-point; switching to single precision could further increase speed and reduce memory usage at the cost of lower numerical accuracy. We also plan to explore unordered additive vector reduction, which is generally faster than ordered reduction, and to quantify the error introduced by this approach. The current implementation runs on a single core; we plan to implement a multicore version.
