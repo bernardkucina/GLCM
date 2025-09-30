@@ -1,11 +1,10 @@
 # Performance evaluation of a RISC-V vector processor for edge processing of Sensor Data
 
-> **BSc thesis in the undergraduate program at the Faculty of Computer and Information Science, University of Ljubljana.**  
+> **BSc thesis in the undergraduate program at the Faculty of Computer and Information Science, University of Ljubljana. The thesis is available online in the [UL Repository](https://repozitorij.uni-lj.si/IzpisGradiva.php?id=172692&lang=slv) and is written in Slovene.**  
 > Mentor: doc. dr. Ratko Pilipović, Co-mentor: doc. dr. Octavian Mihai Machidon
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](#licenca)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg)](LICENSE)
 [![RISC-V RVV](https://img.shields.io/badge/RISC--V-RVV%201.0-blue)]()
-[![Reproducible](https://img.shields.io/badge/reproducible-yes-success)]()
 
 ---
 
@@ -35,7 +34,8 @@ We have researched different algorithmic approaches for calculating GLCM and its
 |  ├─ stb_image_write.h
 │  ├─ stb_image.h
 |  ├─ setup.sh           # script for installing RISC-V tools
-│  └─ run.sh             # script for running test
+|  ├─ runPC.sh           # script for running tests on PC  
+│  └─ run.sh             # script for running tests on OrangePi RV2
 |
 ```
 
@@ -94,6 +94,32 @@ make install
 cd ../..
 rm -rf riscv-pk
 ```
+---
+## Running test
+To run the tests on the OrangePi RV2, use `run.sh`. To run on a PC, use `runPC.sh`. Note that portability issues may occur on other platforms that support RVV 1.0.
+```bash
+# Command for running the script on the OrangePi RV2, where n is LMUL ∈ {1,2,4,8}.
+bash run.sh n
+# Command for running the script on PC, where n is LMUL ∈ {1,2,4,8}.
+bash runPC.sh n
+```
+In both files `run.sh` and `runPC.sh` you can set te running test in following lines of code:
+
+```bash
+ANGLES=(0 45 90 135) # Array of angles for the test (in degrees)
+DISTANCES=(5)        # Distance for GLCM calculation
+IMAGE_IDX=0          # Image index (choose 0, 1, 2, or 3)
+ATTEMPT=10           # Number of test runs
+```
+The following table reprisent image index for parameter `IMAGE_IDX`.
+| IMAGE_IDX | Figure   | Filename                                                           |
+|:-----------:|:----------:|:--------------------------------------------------------------------:|
+| 0          | Figure 1 | `frame_0249_jpg.rf.d33720f1304d383c749e18cc08dea6db.jpg`           |
+| 1          | Figure 2 | `frame_0055_jpg.rf.440b9803a9766de971934b5a891db20f.jpg`           |
+| 2          | Figure 3 | `frame_0057_jpg.rf.88cee5058d48da760320392c6967ddde.jpg`           |
+| 3          | Figure 4 | `frame_0252_jpg.rf.f685d90adb983dc8dafa4ae700342521.jpg`           |
+
+
 ---
 ## Results
 

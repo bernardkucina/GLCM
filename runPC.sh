@@ -17,8 +17,8 @@ for d in "${DISTANCES[@]}"; do
 done
 
 # compile
-gcc glcmSeq.c -o glcmSeq -lm
-gcc glcmVec.c -march=rv64gcv -mabi=lp64d -mcmodel=medany -o glcmVec -lm
+riscv64-unknown-elf-gcc glcmSeq.c -o glcmSeq -lm
+riscv64-unknown-elf-gcc glcmVec.c -march=rv64gcv -mabi=lp64d -mcmodel=medany -o glcmVec -lm
 
 # run sequential version
 for d in "${DISTANCES[@]}"; do
@@ -26,7 +26,7 @@ for d in "${DISTANCES[@]}"; do
   echo "Running sequential, distance=$d → $OUTFILE"
   echo -e "Sequential: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
-  ./glcmSeq --distance "$d" --angles "${ANGLES[@]}" --normed 1 --image "$IMAGE_IDX" >> "$OUTFILE"
+  spike --varch=vlen:256,elen:64 --isa=rv64gcv pk ./glcmSeq --distance "$d" --angles "${ANGLES[@]}" --normed 1 --image "$IMAGE_IDX" >> "$OUTFILE"
   sleep 3
   done
   echo -e "\n" >> "$OUTFILE"
@@ -38,7 +38,7 @@ for d in "${DISTANCES[@]}"; do
   echo "Running vector (optimized=1), distance=$d → $OUTFILE"
   echo -e "VectorizedOpt: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
-  ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 1 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
+  spike --varch=vlen:256,elen:64 --isa=rv64gcv pk ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 1 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
   sleep 3
   done
   echo -e "\n" >> "$OUTFILE"
@@ -50,7 +50,7 @@ for d in "${DISTANCES[@]}"; do
   echo "Running vector (optimized=0), distance=$d → $OUTFILE"
   echo -e "VectorizedNormal: ${ANGLES[*]}\n" >> "$OUTFILE"
   for (( i=0; i<ATTEMPT; i++ )); do
-  ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 0 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
+  spike --varch=vlen:256,elen:64 --isa=rv64gcv pk ./glcmVec --distance "$d" --angles "${ANGLES[@]}" --normed 1 --optimized 0 --image "$IMAGE_IDX" --lmul "$LMUL" >> "$OUTFILE"
   sleep 3
   done
   echo -e "\n" >> "$OUTFILE"
